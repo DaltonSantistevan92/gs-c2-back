@@ -6,6 +6,8 @@ require_once 'app/helper.php';
 require_once 'core/conexion.php';
 require_once 'controllers/detallecompraController.php';
 require_once 'models/compraModel.php';
+require_once 'models/codigosModel.php';
+
 
 class CompraController
 {
@@ -19,11 +21,65 @@ class CompraController
         $this->db = new Conexion();
     }
 
+    public function getCodigo($params)
+    {
+        $tipo = $params['tipo'];
+        $registro = Codigo::where('tipo',$tipo)->orderBy('id','DESC')->first();
+        $response = [];
+
+        if ($registro == null) {
+            $response = [
+                'status' => true,
+                'tipo' => $tipo,
+                'mensaje' => 'Primer registro',
+                'codigo' => '0001'
+            ];
+        } else {
+            $numero = intval($registro->codigo);
+            $siguiente = '000' . ($numero += 1);
+            $response = [
+                'status' => true,
+                'tipo' => $tipo,
+                'mensaje' => 'Existen datos, aumentando registro compra',
+                'codigo' => $siguiente
+            ];
+        }
+        echo json_encode($response);
+    }
+
+    public function aumentarCodigo(Request $request)
+    {
+        $this->cors->corsJson();
+        $tipoRequest = $request->input('codigo');
+        $tipo = $tipoRequest->tipo;
+        $codigo = $tipoRequest->codigo;
+        $response = [];
+
+        if ($tipoRequest == null) {
+            $response = [
+                'status' => false,
+                'mensaje' => 'no ahi datos'
+            ];
+        } else {
+            $nuevo = new Codigo();
+            $nuevo->codigo = $codigo;
+            $nuevo->tipo = $tipo;
+            $nuevo->estado = 'A';
+            $nuevo->save();
+
+            $response = [
+                'status' => true,
+                'mensaje' => 'Guardando datos',
+                'codigo' => $nuevo
+            ];
+        }
+        echo json_encode($response);
+    }
+
     public function listar()
     {
         $this->cors->corsJson();
         $compras = Compra::where('estado', 'A')->get();
-        //var_dump($compras);
         $response = [];
 
         foreach ($compras as $item) {

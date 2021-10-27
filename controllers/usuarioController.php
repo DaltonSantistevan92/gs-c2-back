@@ -8,6 +8,8 @@ require_once 'app/helper.php';
 require_once 'models/usuarioModel.php';
 require_once 'models/personaModel.php';
 require_once 'controllers/personaController.php';
+require_once './util/claseCorreo.php';
+
 
 
 class UsuarioController
@@ -333,6 +335,55 @@ class UsuarioController
         }
         echo json_encode($response);
     }
+
+
+    protected function enviarCorreo($correo,$nombre,$usuario = null){
+        $claseCorreo = new Correo($correo,$nombre);
+        $texto = 'Se ha generado una nueva contraseña debido a su solicitud, su contraseña actual ahora es: ';
+        $titulo = 'Solicitud de contrasena';
+        $codigo = substr(hash('sha256',time()),0,4); 
+        $usuario->clave = hash('sha256',$codigo);
+        $usuario->save();
+        $proceso  = $claseCorreo->enviarCorreo($titulo,$texto,$codigo);
+
+        return $proceso;
+    }
+
+    public function solicitudPassword(Request $request){
+        $this->cors->corsJson();
+        $correo = $request->input('correo');
+        $persona = Persona::where('correo',$correo)->first();
+        
+        if($persona){
+            $usuario = Usuario::where('persona_id',$persona->id)->first();
+            $nombres= $usuario->persona->nombres.' '.$usuario->persona->apellidos;
+    
+            $estado = $this->enviarCorreo($correo,$nombres,$usuario);
+            $response = [];
+    
+            if($estado){
+                $response = [
+                    'status' => true,
+                    'mensaje' => 'Se ha enviado la contraseña a su correo'
+                ];
+            }else{
+                $response = [
+                    'status' => false,
+                    'mensaje' => 'No se puede enviar el correo'
+                ];
+            }
+        }else{
+            $response = [
+                'status' => false,
+                'mensaje' => 'El correo ingresado no existe'
+            ];
+        }       
+        echo json_encode($response);
+    }
+
+    
+
+
 
     
 }

@@ -7,7 +7,6 @@ class UsuarioAccion
 
     public function __construct()
     {
-        //echo "Soy la clase accionUsuario<br>";
     }
 
     //Configurar rutas y controllers
@@ -47,7 +46,11 @@ class UsuarioAccion
                 } else
                 if ($ruta == '/usuario/eliminar') {
                     Route::post('/usuario/eliminar', 'usuarioController@eliminar');
-                }else {
+                }else 
+                if ($ruta == '/usuario/enviarcorreo') {
+                    Route::post('/usuario/enviarcorreo', 'usuarioController@solicitudPassword');
+                }
+                else {
                     ErrorClass::e(404, "La ruta no existe");
                 }
                 break; 

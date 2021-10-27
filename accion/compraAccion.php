@@ -29,26 +29,27 @@ class CompraAccion
                 if($ruta == '/compra/mensuales' && $params){
                     Route::get('/compra/mensuales/:inicio/:fin', 'compraController@compraMensuales',$params);
                 }else
+                if ($ruta == '/compra/generar_codigo' && $params) {
+                    Route::get('/compra/generar_codigo/:tipo', 'compraController@getCodigo',$params);
+                }else
                 if( $ruta == '/compra/proyeccion' && $params){
                     Route::get('/compra/proyeccion/:year', 'compraController@proyeccion', $params); 
-                }   
+                } else {
+                    ErrorClass::e('404', 'No se encuentra la url');
+                }  
                 break;
 
             case 'post':
                 if ($ruta == '/compra/save') {
                     Route::post('/compra/save', 'compraController@guardar');
+                }else
+                if($ruta == '/compra/aumentarCodigo'){
+                    Route::post('/compra/aumentarCodigo', 'compraController@aumentarCodigo');
+                }else {
+                    ErrorClass::e('404', 'No se encuentra la url');
                 }
                 break;
 
-            case 'delete':
-                /*  if($params){
-                if($ruta == '/categoria/eliminar'){
-                Route::delete('/categoria/eliminar/:id', 'categoriaController@eliminar', $params);
-                }
-                }else{
-                ErrorClass::e('400', 'No ha enviado parámetros por la url');
-                } */
-                break;
         }
     }
 }

@@ -6,8 +6,9 @@ require_once 'app/helper.php';
 require_once 'core/conexion.php';
 require_once 'core/params.php';
 require_once 'models/ventaModel.php';
+require_once 'models/codigosModel.php';
 require_once 'controllers/detalleventaController.php';
- 
+
 
 class VentaController
 {
@@ -17,10 +18,66 @@ class VentaController
     public function __construct()
     {
         $this->cors = new Cors();
-        $this->db = new Conexion(); 
+        $this->db = new Conexion();
     }
 
-    public function guardar(Request $request){
+    public function getCodigo($params)
+    {
+        $tipo = $params['tipo'];
+        $registro = Codigo::where('tipo',$tipo)->orderBy('id','DESC')->first();
+        $response = [];
+
+        if ($registro == null) {
+            $response = [
+                'status' => true,
+                'tipo' => $tipo,
+                'mensaje' => 'Primer registro',
+                'codigo' => '0001'
+            ];
+        } else {
+            $numero = intval($registro->codigo);
+            $siguiente = '000' . ($numero += 1);
+            $response = [
+                'status' => true,
+                'tipo' => $tipo,
+                'mensaje' => 'Existen datos,aumentando registro venta',
+                'codigo' => $siguiente
+            ];
+        }
+        echo json_encode($response);
+    }
+
+    public function aumentarCodigo(Request $request)
+    {
+        $this->cors->corsJson();
+        $tipoRequest = $request->input('codigo');
+        $tipo = $tipoRequest->tipo;
+        $codigo = $tipoRequest->codigo;
+        $response = [];
+
+        if ($tipoRequest == null) {
+            $response = [
+                'status' => false,
+                'mensaje' => 'no ahi datos'
+            ];
+        } else {
+            $nuevo = new Codigo();
+            $nuevo->codigo = $codigo;
+            $nuevo->tipo = $tipo;
+            $nuevo->estado = 'A';
+            $nuevo->save();
+
+            $response = [
+                'status' => true,
+                'mensaje' => 'Guardando datos',
+                'codigo' => $nuevo
+            ];
+        }
+        echo json_encode($response);
+    }
+
+    public function guardar(Request $request)
+    {
         $this->cors->corsJson();
         $venta = $request->input('venta');
         $detalles_ventas = $request->input('detalles');
@@ -28,8 +85,8 @@ class VentaController
         $serie = $venta->serie;
         $response = [];
 
-        if($venta){
-            $venta->serie = $venta->serie; 
+        if ($venta) {
+            $venta->serie = $venta->serie;
             $venta->usuario_id = intval($venta->usuario_id);
             $venta->cliente_id = intval($venta->cliente_id);
             $venta->subtotal = floatval($venta->subtotal);
@@ -54,19 +111,19 @@ class VentaController
             //validar con first para que no se repita la serie
             $existe = Venta::where('serie', $serie)->get()->first();
 
-            if($existe){
+            if ($existe) {
                 $response = [
                     'status' => false,
                     'mensaje' => 'La venta ya existe',
                     'venta' => null,
-                    'detalle' => null            
+                    'detalle' => null
                 ];
-            }else{
+            } else {
 
-                if($nuevo->save()){
+                if ($nuevo->save()) {
 
                     //Guarda detalle de venta
-                    $detalleController = new DetalleVentaController(); 
+                    $detalleController = new DetalleVentaController();
 
                     $extra = $detalleController->guardar($nuevo->id, $detalles_ventas);
 
@@ -76,19 +133,16 @@ class VentaController
                         'venta' => $nuevo,
                         'detalle' => $extra
                     ];
-
-                }else{
+                } else {
                     $response = [
                         'status' => false,
                         'mensaje' => 'No se puede guardar',
                         'venta' => null,
                         'detalle' => null
-                        ];
-
+                    ];
                 }
-
             }
-        }else{
+        } else {
             $response = [
                 'status' => false,
                 'mensaje' => 'No hay datos para procesar',
@@ -96,11 +150,9 @@ class VentaController
                 'detalle' => null
 
             ];
-
         }
         echo json_encode($response);
-
-    } 
+    }
 
 
     public function listar()
@@ -157,13 +209,13 @@ class VentaController
         echo json_encode($response);
     }
 
-    public function datatable()  
+    public function datatable()
     {
         $this->cors->corsJson();
 
         $ventas = Venta::where('estado', 'A')
-                    ->orderBy('id', 'DESC')
-                    ->get();
+            ->orderBy('id', 'DESC')
+            ->get();
 
         $data = [];
         $i = 1;
@@ -238,58 +290,65 @@ class VentaController
         echo json_encode($response);
     }
 
-    public function grafica_venta(){
+    public function grafica_venta()
+    {
         $this->cors->corsJson();
         $year = date('Y');
 
         $meses = [
             'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
         ];
-        $data = []; 
+        $data = [];
 
-         //Obtener total de ventas
-         for($i = 0; $i < count($meses); $i++){
+        //Obtener total de ventas
+        for ($i = 0; $i < count($meses); $i++) {
             $sqlVentas = "SELECT SUM(total) as suma FROM `ventas` WHERE MONTH(fecha_venta) = ($i + 1) AND estado = 'A'";
-            
+
             $ventaMes = $this->db->database::select($sqlVentas);
-    
+
             $data[] = ($ventaMes[0]->suma) ? round($ventaMes[0]->suma, 2) : 0;
-           
-           $response = [
-               'venta' => [
-                   'labels' => $meses,
-                   'data' => $data
-               ]
-           ];
+
+            $response = [
+                'venta' => [
+                    'labels' => $meses,
+                    'data' => $data
+                ]
+            ];
         }
         echo json_encode($response);
-
     }
 
-    function ventaMensuales($params){
+    function ventaMensuales($params)
+    {
 
         $inicio = $params['inicio'];
         $fin = $params['fin'];
-        $meses = Helper::MESES(); 
+        $meses = Helper::MESES();
 
         $inicio  = new DateTime($inicio);
         $fin = new DateTime($fin);
 
-        $mesInicio = intval(explode('-',$params['inicio'])[1]);
-        $mesFin = intval(explode('-',$params['fin'])[1]);
+        $mesInicio = intval(explode('-', $params['inicio'])[1]);
+        $mesFin = intval(explode('-', $params['fin'])[1]);
 
-        $data = []; $labels = [];   $dataTotal = [];    $dataIva = [];  $dataSubtotal = [];
-        $totalGeneral = 0;  $ivaGeneral = 0;    $subtotalGeneral = 0;
-       
-        for($i = $mesInicio; $i <= $mesFin; $i++){
+        $data = [];
+        $labels = [];
+        $dataTotal = [];
+        $dataIva = [];
+        $dataSubtotal = [];
+        $totalGeneral = 0;
+        $ivaGeneral = 0;
+        $subtotalGeneral = 0;
+
+        for ($i = $mesInicio; $i <= $mesFin; $i++) {
             $sql = "SELECT SUM(total) as total, SUM(subtotal) as subtotal, SUM(iva) as iva, fecha_venta FROM `ventas` WHERE MONTH(fecha_venta) = ($i) AND estado = 'A'";
             $ventasMes = $this->db->database::select($sql)[0];
-            
-            $iva = (isset($ventasMes->iva)) ? (round($ventasMes->iva,2)) : 0;
+
+            $iva = (isset($ventasMes->iva)) ? (round($ventasMes->iva, 2)) : 0;
             $subtotal = (isset($ventasMes->subtotal)) ? (round($ventasMes->subtotal, 2)) : 0;
             $total = (isset($ventasMes->total)) ? (round($ventasMes->total, 2)) : 0;
-            $fecha = (isset($ventasMes->fecha_venta)) ? $ventasMes->fecha_venta: '-'; 
-            $serie = 'Ventas Totales de '.$meses[$i-1];
+            $fecha = (isset($ventasMes->fecha_venta)) ? $ventasMes->fecha_venta : '-';
+            $serie = 'Ventas Totales de ' . $meses[$i - 1];
 
             $aux = [
                 'fecha' => $fecha,
@@ -303,7 +362,7 @@ class VentaController
                 'data' => $aux
             ];
             $data[] = $aux2;
-            $labels[] = ucfirst($meses[$i-1]);
+            $labels[] = ucfirst($meses[$i - 1]);
             $dataTotal[] = $total;
             $dataIva[] = $iva;
             $dataSubtotal[] = $subtotal;
@@ -312,7 +371,7 @@ class VentaController
             $subtotalGeneral += $subtotal;
         }
 
-        $ivaGeneral= round($ivaGeneral,2);
+        $ivaGeneral = round($ivaGeneral, 2);
         $response = [
             'lista' => $data,
             'totales' => [
@@ -386,21 +445,23 @@ class VentaController
 
         $array_seudoFinal = [];
         //Recortar segun limite
-        if(count($array_productos) < $limit){
+        if (count($array_productos) < $limit) {
             $array_seudoFinal = $array_productos;
-        }else
-        if(count($array_productos) == $limit){
+        } else
+        if (count($array_productos) == $limit) {
             $array_seudoFinal = $array_productos;
-        }else
-        if(count($array_productos) > $limit){
-            for($i = 0; $i < $limit; $i++){
+        } else
+        if (count($array_productos) > $limit) {
+            for ($i = 0; $i < $limit; $i++) {
                 $array_seudoFinal[] = $array_productos[$i];
             }
         }
 
-        $arrayFinal = [];   $total_global = 0;  $totalParcentaje = 0;
+        $arrayFinal = [];
+        $total_global = 0;
+        $totalParcentaje = 0;
 
-        foreach($array_seudoFinal as $item){
+        foreach ($array_seudoFinal as $item) {
             $p = Producto::find($item->producto_id);
             $total = $p->precio_venta * $item->cantidad;
             $total_global += $total;
@@ -416,13 +477,15 @@ class VentaController
 
         //Armar data de grafico de pastel para cantidad productos mas vendidos
         //Armar la data de grafico pastel por porcentaje
-        $masVendidos = [];  $labels = [];   $porcentajes = [];
+        $masVendidos = [];
+        $labels = [];
+        $porcentajes = [];
 
-        foreach($arrayFinal as $item){
+        foreach ($arrayFinal as $item) {
 
             $labels[] = $item->producto->nombre;
             $masVendidos[] = $item->cantidad;
-            $p = round((100 * $item->cantidad) / $totalParcentaje,2);
+            $p = round((100 * $item->cantidad) / $totalParcentaje, 2);
             $porcentajes[] = $p;
         }
 
@@ -445,7 +508,8 @@ class VentaController
         echo json_encode($response);
     }
 
-    function ordenar_array($array){
+    function ordenar_array($array)
+    {
         for ($i = 1; $i < count($array); $i++) {
             for ($j = 0; $j < count($array) - $i; $j++) {
                 if ($array[$j]->cantidad > $array[$j + 1]->cantidad) {
@@ -459,15 +523,20 @@ class VentaController
 
         return $array;
     }
-    
 
-    public function proyeccion($params){
+
+    public function proyeccion($params)
+    {
 
         $this->cors->corsJson();
         $year = intval($params['year']);     //2021
-        $tabla = [];    $response = [];     $burbuja = [];  $radio = 5; $labels = [];
-        
-        $ventas = Venta::whereYear('created_at',$year)->get();      //Obtener todas las ventas anuales
+        $tabla = [];
+        $response = [];
+        $burbuja = [];
+        $radio = 5;
+        $labels = [];
+
+        $ventas = Venta::whereYear('created_at', $year)->get();      //Obtener todas las ventas anuales
         $fecha_min = $ventas[0]->fecha_venta;                       //Obtener fecha inicio de ventas
         $fecha_max = $ventas[count($ventas) - 1]->fecha_venta;      //Obtener fecha hasta de la última venta
 
@@ -476,34 +545,36 @@ class VentaController
         $diff = $date1->diff($date2);                               //Hacer la resta o diferencia de las fechas
         $dias = $diff->days;                                        //Obtener la diferencia en días
 
-        if(count($ventas) > 0){
-           for($i = 0; $i <= $dias; $i++){                          //Recorrer el numero de días
-            $sumDay = "+ ".($i)." days";                            //Armar el string para sumar de (1 días) y contando
-            $fc = date("Y-m-d",strtotime($fecha_min.$sumDay));      //Sumar el numero de dias según el contador
-            $labels[] = $fc;                                        //Guardar la nueva fecha y guardar en un array
-            $ventaDia = Venta::where('fecha_venta', $fc)->get();    //Obtener la venta de la fecha específica - intervalo de fecha inicio y maxima
-            
-            if($ventaDia && count($ventaDia) > 0){                  //Validar si existe la venta
-                $cant = 0;  $total = 0;                             //Iniciar las variables
-                foreach($ventaDia as $vd){                          //Recorrer las ventas de la fecha especifica
-                    $cant++;                                        //Aumentar la cantidad 
-                    $total += $vd->total;                           //Sumar el total de la venta
+        if (count($ventas) > 0) {
+            for ($i = 0; $i <= $dias; $i++) {                          //Recorrer el numero de días
+                $sumDay = "+ " . ($i) . " days";                            //Armar el string para sumar de (1 días) y contando
+                $fc = date("Y-m-d", strtotime($fecha_min . $sumDay));      //Sumar el numero de dias según el contador
+                $labels[] = $fc;                                        //Guardar la nueva fecha y guardar en un array
+                $ventaDia = Venta::where('fecha_venta', $fc)->get();    //Obtener la venta de la fecha específica - intervalo de fecha inicio y maxima
+
+                if ($ventaDia && count($ventaDia) > 0) {                  //Validar si existe la venta
+                    $cant = 0;
+                    $total = 0;                             //Iniciar las variables
+                    foreach ($ventaDia as $vd) {                          //Recorrer las ventas de la fecha especifica
+                        $cant++;                                        //Aumentar la cantidad 
+                        $total += $vd->total;                           //Sumar el total de la venta
+                    }
+
+                    $total = round($total, 2);                          //Redondear en dos cifras
+                    $auxDia = [                                         //Armar el array asociativo
+                        'fecha' => $fc,
+                        'cantidad' => $cant,    //x
+                        'venta' => $total       //y
+                    ];
+
+                    $tabla[] = (object)$auxDia;                         //Parsear un objeto el array asociativo e insertarlo en un nuevo array
+                    $cant = 0;
+                    $total = 0;                             //Resetear las variables
                 }
-                
-                $total = round($total, 2);                          //Redondear en dos cifras
-                $auxDia = [                                         //Armar el array asociativo
-                    'fecha' => $fc,
-                    'cantidad' => $cant,    //x
-                    'venta' => $total       //y
-                ];
-
-                $tabla[] = (object)$auxDia;                         //Parsear un objeto el array asociativo e insertarlo en un nuevo array
-                $cant = 0;  $total = 0;                             //Resetear las variables
             }
-           }
 
-           $it = 1;
-           foreach($tabla as $t){                                   //Recorrer los datos de todas las ventas
+            $it = 1;
+            foreach ($tabla as $t) {                                   //Recorrer los datos de todas las ventas
                 $auxB = [                                           //Armar el nuevo objeto
                     'x' => $it,
                     'y' => $t->venta,
@@ -514,16 +585,23 @@ class VentaController
                 $burbuja[] = (object)$auxB;                         //Insertar datos en el array para armar la data
             }
 
-           $full = [];  $i = 0; $sumax2 = 0;    $sumaxy = 0;    $sumax = 0; $sumay = 0;
+            $full = [];
+            $i = 0;
+            $sumax2 = 0;
+            $sumaxy = 0;
+            $sumax = 0;
+            $sumay = 0;
 
-           foreach($tabla as $t){                                   //Recorrer todas las ventas
+            foreach ($tabla as $t) {                                   //Recorrer todas las ventas
                 $x2 = pow($t->cantidad, 2);                         //Elevar x o cantidad al cuadrado
                 $xy = round($t->cantidad * $t->venta, 2);           //Elevar x*y o la cantidad total de ventas por el numero de dias al cuadrado
 
-                $sumax += $t->cantidad;     $sumay += $t->venta;    //Sumar x --- sumar y -> sumadores
-                $sumax2 += $x2;     $sumaxy += $xy;                 //sumar x al cuadrado, 
-            
-          
+                $sumax += $t->cantidad;
+                $sumay += $t->venta;    //Sumar x --- sumar y -> sumadores
+                $sumax2 += $x2;
+                $sumaxy += $xy;                 //sumar x al cuadrado, 
+
+
                 $aux = [                                            //Armar el array asociativo 
                     'venta' => ($i + 1),                            //x
                     'cantidad' => $t->cantidad,                     //Cantidad de ventas de ese día
@@ -533,51 +611,52 @@ class VentaController
                 ];
 
                 $full[] = (object)$aux;                             //Guardar en un nuevo array
-                  
+
             }
-           $n = count($tabla);                                      //Guardar el numero de datos a procesar
-           
-           $xPromedio = round(($sumax / $n),2);                     //Obtener el promedio de x
-           $yPromedio = round(($sumay / $n),2);                     //Obtener el promedio de y
+            $n = count($tabla);                                      //Guardar el numero de datos a procesar
 
-           $b = ($sumaxy - $n*$xPromedio*$yPromedio) / ($sumax2 - $n*(pow($xPromedio,2)));  //Calcular la constante b
-              
-           $a = $yPromedio - $b*$xPromedio;                         //Calcular la constante a -> formula ypromedio - b* xpromedio
-         
-           $b = round($b,2);    $a = round($a,2);                   //Redondear a dos decimales la constantes
-           
-           $singo = ($b > 0) ? '+' : '-';                           //Obtner el signo de la constante b
-           
-           //f(7) = a + b(7)   "=> y= total de ventas" "=>x= dias" 
-           $ecuacion = (string)$a.$singo.$b.'*x';                   //Armar la ecuacion en forma de un string
-           //echo json_encode($ecuacion); die();
+            $xPromedio = round(($sumax / $n), 2);                     //Obtener el promedio de x
+            $yPromedio = round(($sumay / $n), 2);                     //Obtener el promedio de y
 
-           $response = [
-               'status' => true,
-               'tabla' => $tabla,
-               'burbuja' => [
-                   'data' => $burbuja,
-                   'labels' => $labels
-               ],
-               'data' => [
-                   'tabla' => $full,
-                   'promedio' => [
-                       'x' => $xPromedio,
-                       'y' => $yPromedio
-                   ],
-                   'sumatoria' => [
-                       'sumax2' => $sumax2,
-                       'sumaxy' => $sumaxy
-                   ],
-                   'constantes' => [
-                       'b' => $b,
-                       'a' => $a
-                   ],
-                   'signo' => $singo,
-                   'ecuacion' => $ecuacion
-               ]
-           ];
-        }else{
+            $b = ($sumaxy - $n * $xPromedio * $yPromedio) / ($sumax2 - $n * (pow($xPromedio, 2)));  //Calcular la constante b
+
+            $a = $yPromedio - $b * $xPromedio;                         //Calcular la constante a -> formula ypromedio - b* xpromedio
+
+            $b = round($b, 2);
+            $a = round($a, 2);                   //Redondear a dos decimales la constantes
+
+            $singo = ($b > 0) ? '+' : '-';                           //Obtner el signo de la constante b
+
+            //f(7) = a + b(7)   "=> y= total de ventas" "=>x= dias" 
+            $ecuacion = (string)$a . $singo . $b . '*x';                   //Armar la ecuacion en forma de un string
+            //echo json_encode($ecuacion); die();
+
+            $response = [
+                'status' => true,
+                'tabla' => $tabla,
+                'burbuja' => [
+                    'data' => $burbuja,
+                    'labels' => $labels
+                ],
+                'data' => [
+                    'tabla' => $full,
+                    'promedio' => [
+                        'x' => $xPromedio,
+                        'y' => $yPromedio
+                    ],
+                    'sumatoria' => [
+                        'sumax2' => $sumax2,
+                        'sumaxy' => $sumaxy
+                    ],
+                    'constantes' => [
+                        'b' => $b,
+                        'a' => $a
+                    ],
+                    'signo' => $singo,
+                    'ecuacion' => $ecuacion
+                ]
+            ];
+        } else {
             $response = [
                 'status' => false,
                 'tabla' => [],
@@ -587,5 +666,4 @@ class VentaController
 
         echo json_encode($response);
     }
-
 }
