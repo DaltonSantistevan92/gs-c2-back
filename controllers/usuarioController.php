@@ -10,8 +10,6 @@ require_once 'models/personaModel.php';
 require_once 'controllers/personaController.php';
 require_once './util/claseCorreo.php';
 
-
-
 class UsuarioController
 {
 
