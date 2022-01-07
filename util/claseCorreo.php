@@ -12,7 +12,7 @@ class Correo
 {
 
     protected $correoMatriz = 'baursaecuador@gmail.com';
-    protected $llaveMatriz = 'baursaEc99';
+    protected $llaveMatriz = 'ecuador2022';
     protected $email;
     protected $nombre;
     protected $titulo;
@@ -42,7 +42,7 @@ class Correo
             $mail->Port       = 587;                                     //TCP port to connect to; use 587 if you have set `SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS`
 
             //Recipients
-            $mail->setFrom('from@example.com', 'Mailer');
+            $mail->setFrom('from@example.com', 'Recuperacion de contraseña');
             $mail->addAddress($this->email, $this->nombre);              //Add a recipient
            
             $mail->addReplyTo('info@example.com', 'Information');
