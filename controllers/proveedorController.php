@@ -64,7 +64,7 @@ class ProveedorController
             if ($existe) {
                 $response = [
                     'status' => false,
-                    'mensaje' => 'El proveedor ya se encuetra registrado',
+                    'mensaje' => 'El ruc del proveedor ya se encuetra registrado',
                     'proveedor' => $existe,
                 ];
             } else {
@@ -178,7 +178,7 @@ class ProveedorController
     public function contar()
     {
         $this->cors->corsJson();
-        $proveedores = Proveedor::where('estado', 'A')->get();
+        $proveedores = Proveedor::where('estado','A')->get();
         $response = [];
 
         if ($proveedores) {

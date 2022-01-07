@@ -253,6 +253,4 @@ class ClienteController {
         echo json_encode($response);
 
     }
-
-
 }

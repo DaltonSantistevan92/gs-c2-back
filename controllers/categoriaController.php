@@ -118,7 +118,7 @@ class CategoriaController
 
         if ($cat) {
             $nuevo = new Categoria; 
-            $existe = Categoria::where('categoria', $nombre)->get()->first();
+            $existe = Categoria::where('categoria', $nombre)->where('estado','A')->get()->first();
 
             if ($existe) {
                 $response = [

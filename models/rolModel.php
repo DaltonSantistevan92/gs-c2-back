@@ -10,5 +10,6 @@ class Rol extends Model
 {
 
     protected $table = "roles";
+    protected $fillable = ['cargo','estado'];
 }
 

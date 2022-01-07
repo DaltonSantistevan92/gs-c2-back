@@ -9,7 +9,6 @@ require_once 'models/ventaModel.php';
 require_once 'models/codigosModel.php';
 require_once 'controllers/detalleventaController.php';
 
-
 class VentaController
 {
     private $cors;
@@ -24,7 +23,7 @@ class VentaController
     public function getCodigo($params)
     {
         $tipo = $params['tipo'];
-        $registro = Codigo::where('tipo',$tipo)->orderBy('id','DESC')->first();
+        $registro = Codigo::where('tipo', $tipo)->orderBy('id', 'DESC')->first();
         $response = [];
 
         if ($registro == null) {
@@ -32,7 +31,7 @@ class VentaController
                 'status' => true,
                 'tipo' => $tipo,
                 'mensaje' => 'Primer registro',
-                'codigo' => '0001'
+                'codigo' => '0001',
             ];
         } else {
             $numero = intval($registro->codigo);
@@ -41,7 +40,7 @@ class VentaController
                 'status' => true,
                 'tipo' => $tipo,
                 'mensaje' => 'Existen datos,aumentando registro venta',
-                'codigo' => $siguiente
+                'codigo' => $siguiente,
             ];
         }
         echo json_encode($response);
@@ -58,7 +57,7 @@ class VentaController
         if ($tipoRequest == null) {
             $response = [
                 'status' => false,
-                'mensaje' => 'no ahi datos'
+                'mensaje' => 'no ahi datos',
             ];
         } else {
             $nuevo = new Codigo();
@@ -70,7 +69,7 @@ class VentaController
             $response = [
                 'status' => true,
                 'mensaje' => 'Guardando datos',
-                'codigo' => $nuevo
+                'codigo' => $nuevo,
             ];
         }
         echo json_encode($response);
@@ -91,7 +90,6 @@ class VentaController
             $venta->cliente_id = intval($venta->cliente_id);
             $venta->subtotal = floatval($venta->subtotal);
             $venta->iva = floatval($venta->iva);
-            $venta->descuento_efectivo = floatval($venta->descuento_efectivo);
             $venta->total = floatval($venta->total);
 
             //Empieza
@@ -101,12 +99,10 @@ class VentaController
             $nuevo->cliente_id = $venta->cliente_id;
             $nuevo->subtotal = $venta->subtotal;
             $nuevo->iva = $venta->iva;
-            $nuevo->descuento_efectivo = $venta->descuento_efectivo;
             $nuevo->total = $venta->total;
             $nuevo->fecha_venta = date('Y-m-d');
             $nuevo->hora_venta = date('H:i:s');
             $nuevo->estado = 'A';
-
 
             //validar con first para que no se repita la serie
             $existe = Venta::where('serie', $serie)->get()->first();
@@ -116,7 +112,7 @@ class VentaController
                     'status' => false,
                     'mensaje' => 'La venta ya existe',
                     'venta' => null,
-                    'detalle' => null
+                    'detalle' => null,
                 ];
             } else {
 
@@ -131,14 +127,14 @@ class VentaController
                         'status' => true,
                         'mensaje' => 'Guardando los datos',
                         'venta' => $nuevo,
-                        'detalle' => $extra
+                        'detalle' => $extra,
                     ];
                 } else {
                     $response = [
                         'status' => false,
                         'mensaje' => 'No se puede guardar',
                         'venta' => null,
-                        'detalle' => null
+                        'detalle' => null,
                     ];
                 }
             }
@@ -147,13 +143,12 @@ class VentaController
                 'status' => false,
                 'mensaje' => 'No hay datos para procesar',
                 'venta' => null,
-                'detalle' => null
+                'detalle' => null,
 
             ];
         }
         echo json_encode($response);
     }
-
 
     public function listar()
     {
@@ -257,7 +252,6 @@ class VentaController
             'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
         ];
         $posMes = intval(date('m')) - 1;
-        //echo $meses[$posMes];
         $hoy = date('Y-m-d');
         $inicio_mes = date('Y') . '-' . date('m') . '-01';
 
@@ -296,13 +290,13 @@ class VentaController
         $year = date('Y');
 
         $meses = [
-            'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+            'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE',
         ];
         $data = [];
 
         //Obtener total de ventas
         for ($i = 0; $i < count($meses); $i++) {
-            $sqlVentas = "SELECT SUM(total) as suma FROM `ventas` WHERE MONTH(fecha_venta) = ($i + 1) AND estado = 'A'";
+            $sqlVentas = "SELECT SUM(total) as suma FROM `ventas` WHERE MONTH(fecha_venta) = ($i + 1) AND  YEAR(fecha_venta) = $year AND estado = 'A'";
 
             $ventaMes = $this->db->database::select($sqlVentas);
 
@@ -311,21 +305,22 @@ class VentaController
             $response = [
                 'venta' => [
                     'labels' => $meses,
-                    'data' => $data
-                ]
+                    'data' => $data,
+                    'anio' => $year,
+                ],
             ];
         }
         echo json_encode($response);
     }
 
-    function ventaMensuales($params)
+    public function ventaMensuales($params)
     {
 
         $inicio = $params['inicio'];
         $fin = $params['fin'];
         $meses = Helper::MESES();
 
-        $inicio  = new DateTime($inicio);
+        $inicio = new DateTime($inicio);
         $fin = new DateTime($fin);
 
         $mesInicio = intval(explode('-', $params['inicio'])[1]);
@@ -355,11 +350,11 @@ class VentaController
                 'serie' => $serie,
                 'iva' => $iva,
                 'subtotal' => $subtotal,
-                'total' => $total
+                'total' => $total,
             ];
             $aux2 = [
-                'mes' => $meses[$i],
-                'data' => $aux
+                'mes' => $meses[$i - 1],
+                'data' => $aux,
             ];
             $data[] = $aux2;
             $labels[] = ucfirst($meses[$i - 1]);
@@ -377,13 +372,13 @@ class VentaController
             'totales' => [
                 'total' => $totalGeneral,
                 'iva' => $ivaGeneral,
-                'subtotal' => $subtotalGeneral
+                'subtotal' => $subtotalGeneral,
             ],
             'barra' => [
                 'labels' => $labels,
                 'dataTotal' => $dataTotal,
                 'dataSubtotal' => $dataSubtotal,
-                'dataIva' => $dataIva
+                'dataIva' => $dataIva,
             ],
         ];
 
@@ -406,7 +401,7 @@ class VentaController
         $secundario = [];
 
         foreach ($ventas as $item) {
-            $item->detalle_venta; //array    
+            $item->detalle_venta; //array
             foreach ($item->detalle_venta as $detalle) {
 
                 $aux = [
@@ -414,7 +409,7 @@ class VentaController
                     'cantidad' => $detalle->cantidad,
                 ];
 
-                $productos_id[] = (object)$aux;
+                $productos_id[] = (object) $aux;
                 $secundario[] = $detalle->producto_id;
             }
         }
@@ -432,11 +427,11 @@ class VentaController
             }
             $aux = [
                 'producto_id' => $no_repetidos[$i],
-                'cantidad' => $contador
+                'cantidad' => $contador,
             ];
 
             $contador = 0;
-            $nuevo_array[] = (object)$aux;
+            $nuevo_array[] = (object) $aux;
             $aux = [];
         }
 
@@ -465,14 +460,14 @@ class VentaController
             $p = Producto::find($item->producto_id);
             $total = $p->precio_venta * $item->cantidad;
             $total_global += $total;
-            $totalParcentaje +=  $item->cantidad;
+            $totalParcentaje += $item->cantidad;
 
             $aux = [
                 'producto' => $p,
                 'cantidad' => $item->cantidad,
-                'total' => $total
+                'total' => $total,
             ];
-            $arrayFinal[] = (object)$aux;
+            $arrayFinal[] = (object) $aux;
         }
 
         //Armar data de grafico de pastel para cantidad productos mas vendidos
@@ -489,26 +484,25 @@ class VentaController
             $porcentajes[] = $p;
         }
 
-
         $response = [
             'lista' => $arrayFinal,
             'data' => [
                 'masVendidos' => [
                     'data' => $masVendidos,
-                    'labels' => $labels
+                    'labels' => $labels,
                 ],
                 'porcentajes' => [
                     'data' => $porcentajes,
-                    'labels' => $labels
-                ]
+                    'labels' => $labels,
+                ],
             ],
-            'total_general' => $total_global
+            'total_general' => $total_global,
         ];
 
         echo json_encode($response);
     }
 
-    function ordenar_array($array)
+    public function ordenar_array($array)
     {
         for ($i = 1; $i < count($array); $i++) {
             for ($j = 0; $j < count($array) - $i; $j++) {
@@ -524,65 +518,64 @@ class VentaController
         return $array;
     }
 
-
     public function proyeccion($params)
     {
 
         $this->cors->corsJson();
-        $year = intval($params['year']);     //2021
+        $year = intval($params['year']); //2021
         $tabla = [];
         $response = [];
         $burbuja = [];
         $radio = 5;
         $labels = [];
 
-        $ventas = Venta::whereYear('created_at', $year)->get();      //Obtener todas las ventas anuales
-        $fecha_min = $ventas[0]->fecha_venta;                       //Obtener fecha inicio de ventas
-        $fecha_max = $ventas[count($ventas) - 1]->fecha_venta;      //Obtener fecha hasta de la última venta
+        $ventas = Venta::whereYear('created_at', $year)->get(); //Obtener todas las ventas anuales
+        $fecha_min = $ventas[0]->fecha_venta; //Obtener fecha inicio de ventas
+        $fecha_max = $ventas[count($ventas) - 1]->fecha_venta; //Obtener fecha hasta de la última venta
 
-        $date1 = new DateTime($fecha_min);                          //Parseamos la fecha de inicio en objet Datetime
-        $date2 = new DateTime($fecha_max);                          //Parseamos la fecha de fin en objet Datetime
-        $diff = $date1->diff($date2);                               //Hacer la resta o diferencia de las fechas
-        $dias = $diff->days;                                        //Obtener la diferencia en días
+        $date1 = new DateTime($fecha_min); //Parseamos la fecha de inicio en objet Datetime
+        $date2 = new DateTime($fecha_max); //Parseamos la fecha de fin en objet Datetime
+        $diff = $date1->diff($date2); //Hacer la resta o diferencia de las fechas
+        $dias = $diff->days; //Obtener la diferencia en días
 
         if (count($ventas) > 0) {
-            for ($i = 0; $i <= $dias; $i++) {                          //Recorrer el numero de días
-                $sumDay = "+ " . ($i) . " days";                            //Armar el string para sumar de (1 días) y contando
-                $fc = date("Y-m-d", strtotime($fecha_min . $sumDay));      //Sumar el numero de dias según el contador
-                $labels[] = $fc;                                        //Guardar la nueva fecha y guardar en un array
-                $ventaDia = Venta::where('fecha_venta', $fc)->get();    //Obtener la venta de la fecha específica - intervalo de fecha inicio y maxima
+            for ($i = 0; $i <= $dias; $i++) { //Recorrer el numero de días
+                $sumDay = "+ " . ($i) . " days"; //Armar el string para sumar de (1 días) y contando
+                $fc = date("Y-m-d", strtotime($fecha_min . $sumDay)); //Sumar el numero de dias según el contador
+                $labels[] = $fc; //Guardar la nueva fecha y guardar en un array
+                $ventaDia = Venta::where('fecha_venta', $fc)->get(); //Obtener la venta de la fecha específica - intervalo de fecha inicio y maxima
 
-                if ($ventaDia && count($ventaDia) > 0) {                  //Validar si existe la venta
+                if ($ventaDia && count($ventaDia) > 0) { //Validar si existe la venta
                     $cant = 0;
-                    $total = 0;                             //Iniciar las variables
-                    foreach ($ventaDia as $vd) {                          //Recorrer las ventas de la fecha especifica
-                        $cant++;                                        //Aumentar la cantidad 
-                        $total += $vd->total;                           //Sumar el total de la venta
+                    $total = 0; //Iniciar las variables
+                    foreach ($ventaDia as $vd) { //Recorrer las ventas de la fecha especifica
+                        $cant++; //Aumentar la cantidad
+                        $total += $vd->total; //Sumar el total de la venta
                     }
 
-                    $total = round($total, 2);                          //Redondear en dos cifras
-                    $auxDia = [                                         //Armar el array asociativo
+                    $total = round($total, 2); //Redondear en dos cifras
+                    $auxDia = [ //Armar el array asociativo
                         'fecha' => $fc,
-                        'cantidad' => $cant,    //x
-                        'venta' => $total       //y
+                        'cantidad' => $cant, //x
+                        'venta' => $total, //y
                     ];
 
-                    $tabla[] = (object)$auxDia;                         //Parsear un objeto el array asociativo e insertarlo en un nuevo array
+                    $tabla[] = (object) $auxDia; //Parsear un objeto el array asociativo e insertarlo en un nuevo array
                     $cant = 0;
-                    $total = 0;                             //Resetear las variables
+                    $total = 0; //Resetear las variables
                 }
             }
 
             $it = 1;
-            foreach ($tabla as $t) {                                   //Recorrer los datos de todas las ventas
-                $auxB = [                                           //Armar el nuevo objeto
+            foreach ($tabla as $t) { //Recorrer los datos de todas las ventas
+                $auxB = [ //Armar el nuevo objeto
                     'x' => $it,
                     'y' => $t->venta,
-                    'r' => $t->cantidad
+                    'r' => $t->cantidad,
                 ];
 
                 $it++;
-                $burbuja[] = (object)$auxB;                         //Insertar datos en el array para armar la data
+                $burbuja[] = (object) $auxB; //Insertar datos en el array para armar la data
             }
 
             $full = [];
@@ -592,43 +585,42 @@ class VentaController
             $sumax = 0;
             $sumay = 0;
 
-            foreach ($tabla as $t) {                                   //Recorrer todas las ventas
-                $x2 = pow($t->cantidad, 2);                         //Elevar x o cantidad al cuadrado
-                $xy = round($t->cantidad * $t->venta, 2);           //Elevar x*y o la cantidad total de ventas por el numero de dias al cuadrado
+            foreach ($tabla as $t) { //Recorrer todas las ventas
+                $x2 = pow($t->cantidad, 2); //Elevar x o cantidad al cuadrado
+                $xy = round($t->cantidad * $t->venta, 2); //Elevar x*y o la cantidad total de ventas por el numero de dias al cuadrado
 
                 $sumax += $t->cantidad;
-                $sumay += $t->venta;    //Sumar x --- sumar y -> sumadores
+
+                $sumay += $t->venta; //Sumar x --- sumar y -> sumadores
                 $sumax2 += $x2;
-                $sumaxy += $xy;                 //sumar x al cuadrado, 
+                $sumaxy += $xy; //sumar x al cuadrado,
 
-
-                $aux = [                                            //Armar el array asociativo 
-                    'venta' => ($i + 1),                            //x
-                    'cantidad' => $t->cantidad,                     //Cantidad de ventas de ese día
-                    'total' => $t->venta,                           //y
-                    'x2' => $x2,                                    // x al cuadrado
-                    'xy' => $xy                                     //x*y
+                $aux = [ //Armar el array asociativo
+                    'venta' => ($i + 1), //x
+                    'cantidad' => $t->cantidad, //Cantidad de ventas de ese día
+                    'total' => $t->venta, //y
+                    'x2' => $x2, // x al cuadrado
+                    'xy' => $xy, //x*y
                 ];
 
-                $full[] = (object)$aux;                             //Guardar en un nuevo array
+                $full[] = (object) $aux; //Guardar en un nuevo array
 
             }
-            $n = count($tabla);                                      //Guardar el numero de datos a procesar
+            $n = count($tabla); //Guardar el numero de datos a procesar
+            $xPromedio = round(($sumax / $n), 2); //Obtener el promedio de x
+            $yPromedio = round(($sumay / $n), 2); //Obtener el promedio de y
 
-            $xPromedio = round(($sumax / $n), 2);                     //Obtener el promedio de x
-            $yPromedio = round(($sumay / $n), 2);                     //Obtener el promedio de y
+            $b = ($sumaxy - ($n * $xPromedio * $yPromedio)) / ($sumax2 - ($n * (pow($xPromedio, 2)))); //Calcular la constante b
 
-            $b = ($sumaxy - $n * $xPromedio * $yPromedio) / ($sumax2 - $n * (pow($xPromedio, 2)));  //Calcular la constante b
-
-            $a = $yPromedio - $b * $xPromedio;                         //Calcular la constante a -> formula ypromedio - b* xpromedio
+            $a = $yPromedio - $b * $xPromedio; //Calcular la constante a -> formula ypromedio - b* xpromedio
 
             $b = round($b, 2);
-            $a = round($a, 2);                   //Redondear a dos decimales la constantes
+            $a = round($a, 2); //Redondear a dos decimales la constantes
 
-            $singo = ($b > 0) ? '+' : '-';                           //Obtner el signo de la constante b
+            $singo = ($b > 0) ? '+' : '-'; //Obtner el signo de la constante b
 
-            //f(7) = a + b(7)   "=> y= total de ventas" "=>x= dias" 
-            $ecuacion = (string)$a . $singo . $b . '*x';                   //Armar la ecuacion en forma de un string
+            //f(7) = a + b(7)   "=> y= total de ventas" "=>x= dias"
+            $ecuacion = (string) $a . $singo . $b . '*x'; //Armar la ecuacion en forma de un string
             //echo json_encode($ecuacion); die();
 
             $response = [
@@ -636,34 +628,74 @@ class VentaController
                 'tabla' => $tabla,
                 'burbuja' => [
                     'data' => $burbuja,
-                    'labels' => $labels
+                    'labels' => $labels,
                 ],
                 'data' => [
                     'tabla' => $full,
                     'promedio' => [
                         'x' => $xPromedio,
-                        'y' => $yPromedio
+                        'y' => $yPromedio,
                     ],
                     'sumatoria' => [
                         'sumax2' => $sumax2,
-                        'sumaxy' => $sumaxy
+                        'sumaxy' => $sumaxy,
                     ],
                     'constantes' => [
                         'b' => $b,
-                        'a' => $a
+                        'a' => $a,
                     ],
                     'signo' => $singo,
-                    'ecuacion' => $ecuacion
-                ]
+                    'ecuacion' => $ecuacion,
+                ],
             ];
         } else {
             $response = [
                 'status' => false,
                 'tabla' => [],
-                'burbuja' => false
+                'burbuja' => false,
             ];
         }
 
         echo json_encode($response);
+    }
+
+    public function actualizarPrecioVentaMargen(Request $request)
+    {
+        $this->cors->corsJson();
+        $response = [];
+        $datos = $request->input('datos');
+
+        if ($datos) {
+
+            $productos_id = intval($datos->producto_id);
+            $precio_venta = doubleval($datos->precio_venta);
+            $margen = doubleval($datos->margen);
+
+            $producto = Producto::find($productos_id);
+            $producto->precio_venta = $precio_venta;
+            $producto->margen = $margen;
+
+            if ($producto->save()) {
+                $response = [
+                    'status' => true,
+                    'mensaje' => 'Se ah actualizado el precio de venta y el margen',
+                    'datos' => $producto,
+                ];
+            } else {
+                $response = [
+                    'status' => false,
+                    'mensaje' => 'No se puede actualizar',
+                    'datos' => null,
+                ];
+            }
+        } else {
+            $response = [
+                'status' => false,
+                'mensaje' => 'no hay datos para procesar',
+                'datos' => null,
+            ];
+        }
+        echo json_encode($response);
+
     }
 }

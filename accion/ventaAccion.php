@@ -47,6 +47,9 @@ class VentaAccion
                 if ($ruta == '/venta/save') {
                     Route::post('/venta/save', 'ventaController@guardar');
                 }else
+                if($ruta == '/venta/actualizarPrecioVentaMargen'){
+                    Route::post('/venta/actualizarPrecioVentaMargen', 'ventaController@actualizarPrecioVentaMargen');
+                }else
                 if($ruta == '/venta/aumentarCodigo'){
                     Route::post('/venta/aumentarCodigo', 'ventaController@aumentarCodigo');
                 }else {

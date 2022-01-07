@@ -3,6 +3,7 @@
 require_once 'vendor/autoload.php';
 require_once 'core/conexion.php';
 require_once 'models/categoriaModel.php';
+require_once 'models/catalogoModel.php';
 
 use Illuminate\Database\Eloquent\Model;
 
@@ -19,5 +20,9 @@ class Producto extends Model
         return $this->belongsTo(Categoria::class);
     }
 
-
+    //uno a muchos
+    public function catalogo()
+    {
+        return $this->hasMany(Catalogo::class);
+    }
 } 

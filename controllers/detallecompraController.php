@@ -5,7 +5,7 @@ require_once 'app/request.php';
 require_once 'core/conexion.php';
 require_once 'models/detallecompraModel.php';
 require_once 'models/compraModel.php';
-require_once 'models/productoModel.php';
+//require_once 'models/productoModel.php';
 
 class DetalleCompraController{ 
 
@@ -41,7 +41,7 @@ class DetalleCompraController{
                 $nuevo->total = doubleval($item->total);
 
                 $nuevo->save();
-                $this->actualizar_producto($item->producto_id, $item->cantidad, $item->precio_compra);
+                //$this->actualizar_producto($item->producto_id, $item->cantidad, $item->precio_compra);
             }
 
             $detalles_save = DetalleCompra::where('compra_id', $compra_id)->get();
@@ -63,15 +63,11 @@ class DetalleCompraController{
         return $response;
     } 
 
-    protected function actualizar_producto($id_producto, $stock, $precio_compra){
+    /* protected function actualizar_producto($id_producto, $stock){
         $producto  = Producto::find($id_producto);
-
         $producto->stock += $stock;
-        $producto->precio_compra = $precio_compra;
-        $producto->margen = $producto->precio_venta - $producto->precio_compra;
-
         $producto->save();
-    }
+    } */
 
 
 }

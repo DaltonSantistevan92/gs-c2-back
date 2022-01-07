@@ -34,6 +34,12 @@ class CompraAccion
                 }else
                 if( $ruta == '/compra/proyeccion' && $params){
                     Route::get('/compra/proyeccion/:year', 'compraController@proyeccion', $params); 
+                } else
+                if($ruta == '/compra/frecuentes' && $params){
+                    Route::get('/compras/frecuentes/:inicio/:fin/:limit', 'compraController@comprasfrecuentes',$params);  
+                }else
+                if($ruta == '/compra/confirmarCompra' && $params){
+                    Route::get('/compras/confirmarCompra/:id/:estado_compra_id', 'compraController@confirmarCompra',$params);  
                 } else {
                     ErrorClass::e('404', 'No se encuentra la url');
                 }  

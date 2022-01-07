@@ -13,6 +13,9 @@ class ProveedorAccion
                 if ($ruta == '/proveedor/listar' && $params) {
                     Route::get('/proveedor/listar/:id', 'proveedorController@buscar', $params);
                 } else
+                if ($ruta == '/proveedor/contar') {
+                    Route::get('/proveedor/contar', 'proveedorController@contar');
+                }else
                 if ($ruta == '/proveedor/listar') {
                     Route::get('/proveedor/listar', 'proveedorController@listar');
                 } else
@@ -21,10 +24,7 @@ class ProveedorAccion
                 } else
                 if ($ruta == '/proveedor/buscar' & $params) {
                     Route::get('/proveedor/buscar/:texto', 'proveedorController@buscarProveedor', $params);
-                } else
-                if ($ruta == '/proveedor/contar') {
-                    Route::get('/proveedor/contar', 'proveedorController@contar');
-                } else {
+                }  else {
                     ErrorClass::e('404', 'No se encuentra la url');
                 }
                 break;
