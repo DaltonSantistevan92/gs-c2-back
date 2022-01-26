@@ -632,7 +632,7 @@ class VentaController
         ];
 
         echo json_encode($final);
-    }
+    } 
 
     public function ordenar_array($array)
     {

@@ -594,6 +594,138 @@ class CompraController
         echo json_encode($response);
     }
 
+    public function comprasFrecuentesv2($params){
+        $inicio = $params['inicio'];
+        $fin = $params['fin'];
+        $limit = intval($params['limit']);
+
+        $compras = Compra::where('fecha_compra', '>=', $inicio)
+            ->where('fecha_compra', '<=', $fin)
+            ->where('estado', 'A')
+            ->take($limit)->get();
+
+
+        $productos_id = []; //array principal
+        $secundario = [];
+
+        foreach ($compras as $item) {
+            $item->detalle_compra; //array
+            foreach ($item->detalle_compra as $detalle) {
+
+                $aux = [
+                    'id' => $detalle->producto_id,
+                    'cantidad' => $detalle->cantidad,
+                ];
+
+                $productos_id[] = (object) $aux;
+                $secundario[] = $detalle->producto_id;
+            }
+        }
+
+        $no_repetidos = array_values(array_unique($secundario));
+        $nuevo_array = [];
+        $contador = 0;
+
+        //Algoritmo para contar y eliminar los elementos repetidos de un array
+        for ($i = 0; $i < count($no_repetidos); $i++) {
+            foreach ($productos_id as $item) {
+                if ($item->id === $no_repetidos[$i]) {
+                    $contador += $item->cantidad;
+                }
+            }
+            $aux = [
+                'producto_id' => $no_repetidos[$i],
+                'cantidad' => $contador,
+            ];
+
+            $contador = 0;
+            $nuevo_array[] = (object) $aux;
+            $aux = [];
+        }
+
+        $array_productos = $this->ordenar_array($nuevo_array);
+        $array_productos = Helper::invertir_array($array_productos);
+
+        $array_seudoFinal = [];
+        //Recortar segun limite
+        if (count($array_productos) < $limit) {
+            $array_seudoFinal = $array_productos;
+        } else
+        if (count($array_productos) == $limit) {
+            $array_seudoFinal = $array_productos;
+        } else
+        if (count($array_productos) > $limit) {
+            for ($i = 0; $i < $limit; $i++) {
+                $array_seudoFinal[] = $array_productos[$i];
+            }
+        }
+
+        $arrayFinal = [];   $arrayPercent = [];
+        $total_global = 0;  
+        $totalParcentaje = 0; $index = 0;
+
+        foreach ($array_seudoFinal as $item) {
+            $p = Producto::find($item->producto_id);
+            $total = $p->precio_compra * $item->cantidad;
+            $total_global += $total;
+            $totalParcentaje += $item->cantidad;
+
+            if($index == 0){
+                $aux = [
+                    'name' => $p->nombre,
+                    'y' => $item->cantidad,
+                    'sliced' => true,
+                    'selected' => true,
+                ];
+            }else{
+                $aux = [
+                    'name' => $p->nombre,
+                    'y' => $item->cantidad
+                ];
+            }
+
+            $arrayFinal[] = (object) $aux;
+            $index++;
+        }
+
+        $index = 0;
+        foreach ($array_seudoFinal as $item) {
+            $p = Producto::find($item->producto_id);
+            $total = $p->precio_compra * $item->cantidad;
+            // $total_global += $total;
+
+            $percent = round((100 * $item->cantidad) / $totalParcentaje, 2);
+
+            if($index == 0){
+                $aux = [
+                    'name' => $p->nombre,
+                    'y' => $percent,
+                    'sliced' => true,
+                    'selected' => true,
+                ];
+            }else{
+                $aux = [
+                    'name' => $p->nombre,
+                    'y' => $percent
+                ];
+            }
+            $index++;
+            $arrayPercent[] = (object) $aux;
+        }
+
+        $final = [
+            'cantidad' => [
+                'lista' => $arrayFinal,
+                'total' => $total_global
+            ],
+            'porcentaje' => [
+                'lista' => $arrayPercent
+            ]
+        ];
+
+        echo json_encode($final);
+    }
+
     public function comprasfrecuentes($params)
     {
 

@@ -34,7 +34,10 @@ class CompraAccion
                 }else
                 if( $ruta == '/compra/proyeccion' && $params){
                     Route::get('/compra/proyeccion/:year', 'compraController@proyeccion', $params); 
-                } else
+                }else
+                if($ruta == '/compra/frecuentesv2' && $params){
+                    Route::get('/compra/frecuentesv2/:inicio/:fin/:limit', 'compraController@comprasFrecuentesv2',$params);  
+                 } else
                 if($ruta == '/compra/frecuentes' && $params){
                     Route::get('/compras/frecuentes/:inicio/:fin/:limit', 'compraController@comprasfrecuentes',$params);  
                 }else
