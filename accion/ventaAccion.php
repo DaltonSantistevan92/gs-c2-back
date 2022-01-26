@@ -26,6 +26,9 @@ class VentaAccion
                 if($ruta == '/venta/mensuales' && $params){
                     Route::get('/venta/mensuales/:inicio/:fin', 'ventaController@ventaMensuales',$params);
                 }else
+                if($ruta == '/venta/frecuentesv2' && $params){
+                    Route::get('/venta/frecuentesv2/:inicio/:fin/:limit', 'ventaController@ventasFrecuentesv2',$params);  
+                }else
                 if($ruta == '/venta/frecuentes' && $params){
                     Route::get('/venta/frecuentes/:inicio/:fin/:limit', 'ventaController@ventasfrecuentes',$params);  
                 }else
