@@ -6,6 +6,8 @@ require_once 'core/conexion.php';
 require_once 'core/params.php';
 require_once 'app/error.php';
 require_once 'models/configuracionesModel.php';
+require_once 'models/productoModel.php';
+
 
 class ConfiguracionesController
 {
@@ -123,6 +125,46 @@ class ConfiguracionesController
             $response = [
                 'status' => false,
                 'config' => 'No hay datos'
+            ];
+        }
+        echo json_encode($response);
+    }
+
+    public function actualizarPventa(Request $request){
+        $this->cors->corsJson();
+        $confRequest = $request->input('config');
+        $id = intval($confRequest->producto_id);
+
+        $producto = Producto::find($id);
+        $response = [];
+        if($confRequest){
+
+            if($producto){
+                $margen = doubleval($confRequest->margen);
+                $precio_venta = doubleval($confRequest->precio_venta);
+
+                $producto->precio_venta = $precio_venta;
+                $producto->margen = $margen;
+                $producto->save();
+
+                $response = [
+                    'status' =>true,
+                    'mensaje' => 'Se ha actualizados todos los datos',
+                    'conf' => $producto
+                ];
+            }else{
+                $response = [
+                    'status' =>false,
+                    'mensaje' => 'No se ha actualizados los datos',
+                    'conf' => $producto
+                ];
+
+            }
+        }else{
+            $response = [
+                'status' =>false,
+                'mensaje' => 'no hay datos para procesar',
+                'conf' => null
             ];
         }
         echo json_encode($response);

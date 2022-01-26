@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 class Compra extends Model
 {
     protected $table = "compras";
-    protected $fillable = ['proveedor_id', 'usuario_id', 'serie_documento', 'descuento', 'sub_total', 'iva', 'total', 'fecha_compra', 'estado','estado_compra_id'];
+    protected $fillable = ['proveedor_id', 'usuario_id', 'serie_documento', 'descuento', 'sub_total', 'iva', 'total', 'fecha_compra','fecha_entrega', 'estado','estado_compra_id'];
 
     //Muchos a uno --- uno a muchos(Inverso)
     public function usuario()

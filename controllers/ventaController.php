@@ -618,9 +618,26 @@ class VentaController
             $a = round($a, 2); //Redondear a dos decimales la constantes
 
             $singo = ($b > 0) ? '+' : '-'; //Obtner el signo de la constante b
-
-            //f(7) = a + b(7)   "=> y= total de ventas" "=>x= dias"
+            
+            //formula y= a+bx  regresion lineal
+            //y = a + b(x)   "=> y= total de ventas" "=>x= dias"
             $ecuacion = (string) $a . $singo . $b . '*x'; //Armar la ecuacion en forma de un string
+
+            
+            //formula para medir el error en regresion lineal ess el error estandar de estimación
+
+            $r1 = pow($sumay,2);
+            $r2 = $a * $sumay;
+            $r3 = $b * $sumaxy;
+            $r4 = $n - 2;
+
+            $syx = ($r1 - ($r2) - ($r3)) / ($r4); //formula para medir el error
+
+            $ss = sqrt($syx); //raiz cuadrado de la formula
+            
+            $s = (round($ss,4));  //redondea en 4 decimal
+            
+            //var_dump($s); die();
             //echo json_encode($ecuacion); die();
 
             $response = [
@@ -646,6 +663,7 @@ class VentaController
                     ],
                     'signo' => $singo,
                     'ecuacion' => $ecuacion,
+                    'error' => $s
                 ],
             ];
         } else {

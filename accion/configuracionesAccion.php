@@ -23,10 +23,14 @@ class ConfiguracionesAccion
             case 'post':
                 if ($ruta == '/configuraciones/editar') {
                     Route::post('/configuraciones/editar', 'configuracionesController@editar');
+                }else
+                if ($ruta == '/configuraciones/actualizarPventa') {
+                    Route::post('/configuraciones/actualizarPventa', 'configuracionesController@actualizarPventa');
                 } else {
                     ErrorClass::e('404', 'No se encuentra la url');
                 }
                 break;
+
         }
     }
 }

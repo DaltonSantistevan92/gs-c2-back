@@ -261,12 +261,15 @@ class CompraController
     public function confirmarCompra($params){
         $this->cors->corsJson();
         $mensajes = '';       $response = [];
-        $id = intval($params['id']);     $estado_compra_id = intval($params['estado_compra_id']);
+        $id = intval($params['id']);     
+        $estado_compra_id = intval($params['estado_compra_id']);
         $compraPendiente = Compra::find($id);
 
-        if($compraPendiente){      
+        if($compraPendiente){ 
+            $compraPendiente->fecha_entrega = date('Y-m-d');     
             $compraPendiente->estado_compra_id = $estado_compra_id;
             $compraPendiente->save();
+            
             $detalles = $compraPendiente->detalle_compra;
             if($detalles->count() > 0 ){        
                 foreach($detalles as $d){
@@ -541,6 +544,18 @@ class CompraController
             $a = round($a, 2); //Redondear a dos decimales la constantes
             $singo = ($b > 0) ? '+' : '-'; //Obtner el signo de la constante b
             $ecuacion = (string) $a . $singo . $b . '*x'; //Armar la ecuacion en forma de un string
+            
+            //error de regresion lineal
+            $r1 = pow($sumay,2);
+            $r2 = $a * $sumay;
+            $r3 = $b * $sumaxy;
+            $r4 = $n - 2;
+
+            $syx = ($r1 - ($r2) - ($r3)) / ($r4); //formula para medir el error
+
+            $ss = sqrt($syx); //raiz cuadrado de la formula
+            
+            $s = (round($ss,4));  //redondea en 4 decimal
 
             $response = [
                 'status' => true,
@@ -565,6 +580,7 @@ class CompraController
                     ],
                     'signo' => $singo,
                     'ecuacion' => $ecuacion,
+                    'error' => $s
                 ],
             ];
         } else {
